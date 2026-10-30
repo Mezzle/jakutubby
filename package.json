@@ -6,7 +6,9 @@
   "main": "src/main.js",
   "scripts": {
     "setup": "npm install && node node_modules/electron/install.js",
-    "start": "electron ."
+    "start": "electron .",
+    "test": "node --test",
+    "test:smoke": "electron scripts/smoke.cjs"
   },
   "devDependencies": {
     "electron": "45.1.0"
