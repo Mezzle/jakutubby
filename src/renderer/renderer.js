@@ -15,15 +15,18 @@ const IDLE_BUBBLE_MS = 6 * 1000;
 let isWaitingForClaude = false;
 let idleBubbleTimer;
 
-// The window ignores clicks except while the pointer is over one of these.
-for (const element of document.querySelectorAll(".interactive")) {
-  element.addEventListener("mouseenter", () => window.jakutubby.setClickable(true));
-  element.addEventListener("mouseleave", () => window.jakutubby.setClickable(false));
-}
-
-window.jakutubby.onCursor(({ dx }) => {
+// Polling works even when Linux stops delivering mouse events to an ignored
+// window. DOM hit testing also includes the sun's animation and hidden panels.
+window.jakutubby.onCursor(({ dx, x, y }) => {
+  const isClickable = Boolean(document.elementFromPoint(x, y)?.closest(".interactive"));
+  window.jakutubby.setClickable(isClickable);
   const lean = Math.max(-MAX_LEAN_DEGREES, Math.min(MAX_LEAN_DEGREES, dx / LEAN_DISTANCE_PER_DEGREE));
   sunLean.style.transform = `rotate(${lean}deg)`;
+});
+
+document.addEventListener("contextmenu", (event) => {
+  event.preventDefault();
+  window.jakutubby.openMenu();
 });
 
 sun.addEventListener("mouseenter", giggle);

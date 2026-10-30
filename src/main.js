@@ -13,8 +13,13 @@ const FOLLOW_EASING = 0.04;
 const FOLLOW_OFFSET = 130;
 const SAY_SOMETHING_SHORTCUT = "CommandOrControl+Alt+J";
 
+// Native Wayland does not support the global cursor/positioning APIs used here.
+// XWayland preserves the same desktop behaviour as an X11 session.
+if (process.platform === "linux") app.commandLine.appendSwitch("ozone-platform", "x11");
+
 let sunWindow;
 let tray;
+let contextMenu;
 let isFollowing = true;
 let isPointerOverSun = false;
 
@@ -33,18 +38,24 @@ function createSunWindow() {
     hasShadow: false,
     alwaysOnTop: true,
     webPreferences: {
+      backgroundThrottling: false,
       preload: path.join(__dirname, "preload.js"),
     },
   });
 
   // "screen-saver" keeps the sun above full-screen windows and the taskbar.
   sunWindow.setAlwaysOnTop(true, "screen-saver");
+  if (process.platform === "darwin") {
+    sunWindow.setVisibleOnAllWorkspaces(true, { visibleOnFullScreen: true });
+    app.dock.hide();
+  }
   // Clicks pass through the transparent parts until the renderer says the
   // pointer is over the sun, the bubble or the text box.
   sunWindow.setIgnoreMouseEvents(true, { forward: true });
   sunWindow.loadFile(path.join(__dirname, "renderer", "index.html"));
 
-  setInterval(followCursor, FRAME_MS);
+  const followTimer = setInterval(followCursor, FRAME_MS);
+  sunWindow.on("closed", () => clearInterval(followTimer));
 }
 
 // Drift sideways towards the mouse along the top of the screen, and tell the
@@ -70,7 +81,10 @@ function followCursor() {
     }
   }
 
+  const [currentX, currentY] = sunWindow.getPosition();
   sunWindow.webContents.send("cursor", {
+    x: cursor.x - currentX,
+    y: cursor.y - currentY,
     dx: cursor.x - sunCentreX,
     dy: cursor.y - windowY,
   });
@@ -80,6 +94,12 @@ function saySomething() {
   sunWindow.webContents.send("say-something");
 }
 
+function openChat() {
+  sunWindow.show();
+  sunWindow.focus();
+  sunWindow.webContents.send("open-chat");
+}
+
 function createTray() {
   const icon = nativeImage
     .createFromPath(path.join(__dirname, "..", "assets", "jakub-sun.png"))
@@ -87,17 +107,19 @@ function createTray() {
 
   tray = new Tray(icon);
   tray.setToolTip("Jakutubby");
-  tray.setContextMenu(
-    Menu.buildFromTemplate([
-      { label: "Say something", accelerator: SAY_SOMETHING_SHORTCUT, click: saySomething },
-      { label: "Chat", click: () => sunWindow.webContents.send("open-chat") },
-      { type: "separator" },
-      { label: "Quit", click: () => app.quit() },
-    ]),
-  );
+  contextMenu = Menu.buildFromTemplate([
+    { label: "Say something", accelerator: SAY_SOMETHING_SHORTCUT, click: saySomething },
+    { label: "Chat", click: openChat },
+    { type: "separator" },
+    { label: "Quit", click: () => app.quit() },
+  ]);
+  tray.setContextMenu(contextMenu);
 }
 
+ipcMain.on("open-menu", () => contextMenu.popup({ window: sunWindow }));
+
 ipcMain.on("set-clickable", (_event, isClickable) => {
+  if (isPointerOverSun === isClickable) return;
   isPointerOverSun = isClickable;
   sunWindow.setIgnoreMouseEvents(!isClickable, { forward: true });
 });
@@ -115,7 +137,9 @@ if (!app.requestSingleInstanceLock()) {
   app.whenReady().then(() => {
     createSunWindow();
     createTray();
-    globalShortcut.register(SAY_SOMETHING_SHORTCUT, saySomething);
+    if (!globalShortcut.register(SAY_SOMETHING_SHORTCUT, saySomething)) {
+      console.warn("Jakutubby: global shortcut unavailable; use the tray menu instead.");
+    }
   });
 
   app.on("will-quit", () => globalShortcut.unregisterAll());

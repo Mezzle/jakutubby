@@ -1,6 +1,7 @@
 const { contextBridge, ipcRenderer } = require("electron");
 
 contextBridge.exposeInMainWorld("jakutubby", {
+  openMenu: () => ipcRenderer.send("open-menu"),
   askClaude: (message) => ipcRenderer.invoke("ask-claude", message),
   randomLine: () => ipcRenderer.invoke("random-line"),
   setClickable: (isClickable) => ipcRenderer.send("set-clickable", isClickable),

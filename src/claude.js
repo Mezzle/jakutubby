@@ -1,5 +1,6 @@
 const { spawn } = require("node:child_process");
 const os = require("node:os");
+const path = require("node:path");
 const { randomLine } = require("./lines");
 
 const CLAUDE_TIMEOUT_MS = 3 * 60 * 1000;
@@ -22,6 +23,12 @@ function askClaude(message) {
     // and never answers.
     const child = spawn("claude", args, {
       cwd: os.homedir(),
+      // Desktop launches may omit the native Claude installer and Homebrew.
+      env: {
+        ...process.env,
+        PATH: [process.env.PATH, path.join(os.homedir(), ".local", "bin"),
+          "/opt/homebrew/bin", "/usr/local/bin"].filter(Boolean).join(path.delimiter),
+      },
       stdio: ["ignore", "pipe", "pipe"],
       timeout: CLAUDE_TIMEOUT_MS,
       windowsHide: true,
