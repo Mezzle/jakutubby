@@ -1,0 +1,167 @@
+:root {
+  --sun-width: 150px;
+  --bubble-bg: #fffdf2;
+  --bubble-border: #f2b705;
+  --text: #2b2112;
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  height: 100%;
+  overflow: hidden;
+  background: transparent;
+  font: 14px/1.4 "Segoe UI", system-ui, sans-serif;
+  color: var(--text);
+  user-select: none;
+}
+
+body {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+  padding-top: 4px;
+}
+
+[hidden] {
+  display: none !important;
+}
+
+.sun-bob {
+  animation: bob 3.2s ease-in-out infinite;
+}
+
+.sun-lean {
+  transition: transform 0.4s ease-out;
+}
+
+.sun {
+  display: block;
+  width: var(--sun-width);
+  cursor: pointer;
+  animation: glow 4s ease-in-out infinite;
+}
+
+.sun.giggle {
+  animation:
+    glow 4s ease-in-out infinite,
+    giggle 0.5s ease-in-out;
+}
+
+.bubble {
+  position: relative;
+  width: 280px;
+  max-height: 200px;
+  padding: 10px 28px 10px 12px;
+  background: var(--bubble-bg);
+  border: 3px solid var(--bubble-border);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgb(0 0 0 / 0.25);
+  user-select: text;
+  animation: pop 0.2s ease-out;
+}
+
+.bubble::before {
+  content: "";
+  position: absolute;
+  top: -12px;
+  left: calc(50% - 10px);
+  border: 10px solid transparent;
+  border-top: 0;
+  border-bottom-color: var(--bubble-border);
+}
+
+.bubble-text {
+  max-height: 174px;
+  overflow-y: auto;
+  white-space: pre-wrap;
+  word-wrap: break-word;
+}
+
+.bubble-text.thinking::after {
+  content: "";
+  animation: dots 1.2s steps(4) infinite;
+}
+
+.bubble-close {
+  position: absolute;
+  top: 4px;
+  right: 6px;
+  border: 0;
+  background: none;
+  font-size: 18px;
+  line-height: 1;
+  color: var(--text);
+  cursor: pointer;
+}
+
+.chat input {
+  width: 280px;
+  padding: 8px 12px;
+  border: 3px solid var(--bubble-border);
+  border-radius: 999px;
+  background: var(--bubble-bg);
+  color: var(--text);
+  font: inherit;
+  outline: none;
+}
+
+@keyframes bob {
+  0%,
+  100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(8px);
+  }
+}
+
+@keyframes glow {
+  0%,
+  100% {
+    filter: drop-shadow(0 0 6px rgb(255 214 0 / 0.6));
+  }
+  50% {
+    filter: drop-shadow(0 0 18px rgb(255 214 0 / 0.95));
+  }
+}
+
+@keyframes giggle {
+  0%,
+  100% {
+    transform: rotate(0);
+  }
+  25% {
+    transform: rotate(-8deg) scale(1.05);
+  }
+  75% {
+    transform: rotate(8deg) scale(1.05);
+  }
+}
+
+@keyframes pop {
+  from {
+    transform: scale(0.8);
+    opacity: 0;
+  }
+}
+
+@keyframes dots {
+  0% {
+    content: "";
+  }
+  25% {
+    content: ".";
+  }
+  50% {
+    content: "..";
+  }
+  75% {
+    content: "...";
+  }
+}

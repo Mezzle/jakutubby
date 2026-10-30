@@ -1,0 +1,27 @@
+<!doctype html>
+<html lang="en-GB">
+  <head>
+    <meta charset="utf-8" />
+    <meta http-equiv="Content-Security-Policy" content="default-src 'self'; img-src 'self'; style-src 'self'" />
+    <title>Jakutubby</title>
+    <link rel="stylesheet" href="styles.css" />
+  </head>
+  <body>
+    <div class="sun-bob">
+      <div class="sun-lean" id="sun-lean">
+        <img class="sun interactive" id="sun" src="../../assets/jakub-sun.png" alt="Jakub as the sun" draggable="false" />
+      </div>
+    </div>
+
+    <div class="bubble interactive" id="bubble" hidden>
+      <button class="bubble-close" id="bubble-close" title="Close">×</button>
+      <div class="bubble-text" id="bubble-text"></div>
+    </div>
+
+    <form class="chat interactive" id="chat" hidden>
+      <input id="chat-input" type="text" placeholder="Say hello to the sun…" autocomplete="off" />
+    </form>
+
+    <script src="renderer.js"></script>
+  </body>
+</html>
