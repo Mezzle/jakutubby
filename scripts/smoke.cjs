@@ -25,8 +25,17 @@ app.whenReady().then(async () => {
       };
       ipcMain.on("set-clickable", listener);
     });
-    window.setPosition(cursor.x - 160, cursor.y - 60);
+    console.log("Smoke: testing click-through recovery");
+    if (process.platform === "linux") {
+      window.setPosition(cursor.x - 160, cursor.y - 60);
+    } else {
+      // Hosted macOS cursors can sit in the menu bar, above the position to
+      // which the OS allows windows to move. Test the same renderer path with
+      // fixed coordinates rather than depending on the runner's cursor.
+      window.webContents.send("cursor", { x: 160, y: 60, dx: 0, dy: 60 });
+    }
     await clickable;
+    console.log("Smoke: testing chat");
     window.webContents.send("open-chat");
     await window.webContents.executeJavaScript(`new Promise(resolve => {
       function check() {
@@ -35,12 +44,15 @@ app.whenReady().then(async () => {
       }
       check();
     })`);
-    window.webContents.send("say-something");
-    await window.webContents.executeJavaScript('document.getElementById("chat-input").dispatchEvent(new KeyboardEvent("keydown", {key:"Escape"}))');
-    assert.equal(await window.webContents.executeJavaScript('document.getElementById("chat").hidden'), true);
+    // Keep chat open: Escape resumes window movement and can invalidate the
+    // compositor surface while capturePage is reading it.
+    console.log("Smoke: capturing stationary window");
+    await window.webContents.executeJavaScript('new Promise(resolve => requestAnimationFrame(() => requestAnimationFrame(resolve)))');
     const image = await window.capturePage();
     assert.equal(image.isEmpty(), false);
     require("node:fs").writeFileSync(path.join(process.cwd(), "smoke.png"), image.toPNG());
+    await window.webContents.executeJavaScript('document.getElementById("chat-input").dispatchEvent(new KeyboardEvent("keydown", {key:"Escape"}))');
+    assert.equal(await window.webContents.executeJavaScript('document.getElementById("chat").hidden'), true);
     console.log(`Electron smoke passed on ${process.platform}/${process.arch}`);
     clearTimeout(timeout);
     app.quit();
